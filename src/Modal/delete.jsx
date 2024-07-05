@@ -22,3 +22,4 @@ function Delete({ closeDeleteModal, handleDelete }) {
 }
 
 export default Delete;
+
