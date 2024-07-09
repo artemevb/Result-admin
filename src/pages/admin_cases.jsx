@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchData, updateCase } from '../store/action/dataActions';
 
 const AdminCases = () => {
   const [quantity, setQuantity] = useState(3);
@@ -6,6 +9,74 @@ const AdminCases = () => {
   const changeValue = (step) => {
     setQuantity((prevQuantity) => Math.max(0, prevQuantity + step));
   };
+
+  const { id } = useParams();
+  const dispatch = useDispatch();
+  const dataState = useSelector(state => state.data);
+  const [caseData, setCaseData] = useState({
+    title: '',
+    name: '',
+    about: '',
+    request: '',
+    mainPhoto: null,
+    gallery: [],
+  });
+
+  useEffect(() => {
+    dispatch(fetchData());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (dataState.data.data) {
+      const selectedCase = dataState.data.data.find(item => item.id === parseInt(id));
+      if (selectedCase) {
+        setCaseData(selectedCase);
+      }
+    }
+  }, [dataState.data.data, id]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCaseData(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    if (name === 'mainPhoto') {
+      setCaseData(prevState => ({
+        ...prevState,
+        mainPhoto: files[0]
+      }));
+    } else if (name === 'gallery') {
+      setCaseData(prevState => ({
+        ...prevState,
+        gallery: Array.from(files)
+      }));
+    }
+  };
+
+  const handleSave = () => {
+    const formData = new FormData();
+    formData.append('title', caseData.title);
+    formData.append('name', caseData.name);
+    formData.append('about', caseData.about);
+    formData.append('request', caseData.request);
+
+    if (caseData.mainPhoto) {
+      formData.append('mainPhoto', caseData.mainPhoto);
+    }
+    caseData.gallery.forEach((photo, index) => {
+      formData.append(`gallery[${index}]`, photo);
+    });
+
+    dispatch(updateCase(id, formData));
+  };
+
+  if (dataState.loading) return <div>Loading...</div>;
+  if (dataState.error) return <div>Error: {dataState.error}</div>;
 
   const renderSteps = () => {
     let steps = [];
@@ -28,33 +99,60 @@ const AdminCases = () => {
         <div className='pl-[8%] w-11/12'>
           <h1 className='text-uslugi-text text-[36px] text-center mb-[50px] pt-[30px]'>header</h1>
           <div className='mb-[50px]'>
-            <label htmlFor="title" className="block text-lg mb-2">Заголовок</label>
-            <input type="text" id="title" className="w-full border border-uslugi-text p-2 rounded-lg" />
+            <label htmlFor="title" className="block text-lg mb-3">Заголовок</label>
+            <input             
+              type="text"
+              id="title"
+              name="title"
+              value={caseData.title}
+              onChange={handleChange}
+              className="w-full border border-uslugi-text p-3 rounded-lg" />
           </div>
           <h1 className='text-uslugi-text text-[36px] text-center mb-[50px]'>результаты</h1>
 
           <div className="flex flex-col">
-            <div className="container">
-            </div>
+            <label htmlFor="name" className="block text-lg mb-2">Подзаголовок</label>
+            <input               
+              type="text"
+              id="name"
+              name="name"
+              value={caseData.name} 
+              onChange={handleChange}
+              className="w-full border border-uslugi-text p-3 rounded-lg" />
           </div>
           <div className="flex flex-col">
-            <label htmlFor="percent" className="block text-lg mb-2">Процент</label>
-            <input type="text" id="percent" className="w-full border border-uslugi-text p-2 rounded-lg" />
-            <label htmlFor="description" className="block text-lg mb-2 mt-4">Описание</label>
-            <input type="text" id="description" className="w-full border border-uslugi-text p-2 rounded-lg" />
+            <label htmlFor="about" className="block text-lg mb-2 mt-20">О компании</label>
+            <textarea
+              id="about"
+              name="about"
+              value={caseData.about}
+              onChange={handleChange}
+              className="w-full border border-uslugi-text p-3 rounded-lg"
+              rows="4"
+            ></textarea>
           </div>
-          <div className="mt-10">
-            <p className="text-uslugi-text text-lg">О компании</p>
-            <textarea id="company-description" className="w-full border border-uslugi-text p-2 rounded-lg" rows="4"></textarea>
-          </div>
-          <div className="mt-[26px]">
-            <p className="text-uslugi-text text-lg">Запросы</p>
-            <textarea id="requests" className="w-full border border-uslugi-text p-2 rounded-lg" rows="4"></textarea>
+          <div className="flex flex-col">
+            <label htmlFor="request" className="block text-lg mb-2 mt-14">Запросы</label>
+            <textarea
+              id="request"
+              name="request"
+              value={caseData.request}
+              onChange={handleChange}
+              className="w-full border border-uslugi-text p-3 rounded-lg"
+              rows="4"
+            ></textarea>
           </div>
           <hr className="my-8 border-t-2 border-border mb-[58px] " />
-          <div className='mb-[50px]'>
+          <div className="flex flex-col mb-[50px]">
             <label htmlFor="link" className="block text-lg mb-2">Ссылка</label>
-            <input type="text" id="link" className="w-full border border-uslugi-text p-2 rounded-lg" />
+            <input
+              type="text"
+              id="link"
+              name="link"
+              value={caseData.link || ''}
+              onChange={handleChange}
+              className="w-full border border-uslugi-text p-3 rounded-lg"
+            />
           </div>
           <h1 className='text-uslugi-text text-[34px] text-center mb-[60px]'>этапы</h1>
           <div className="grid grid-cols-2 gap-4 items-start">
@@ -84,17 +182,44 @@ const AdminCases = () => {
           </div>
           <hr className="my-8 border-t-2 border-border mb-[58px] " />
           <h1 className='text-uslugi-text text-[34px] text-center mb-[60px]'>галерея</h1>
-          <div className="block text-[24px] font-semibold text-uslugi-text">Картинка</div>
-          <label className="upload-button w-[344px] mb-[34px]" htmlFor="file-upload">загрузить</label>
-          <input id="file-upload" type="file" className="file-upload" />
-          <div className="flex gap-[50px]">
-            <div className="w-20 h-20 bg-white rounded-lg"></div>
-            <div className="w-20 h-20 bg-white rounded-lg"></div>
-            <div className="w-20 h-20 bg-white rounded-lg"></div>
+          <div className='flex flex-row gap-40'>
+            <div>
+              <div className="block text-[24px] font-semibold text-uslugi-text">для слайдера</div>
+              <label className="upload-button w-[344px] mb-[34px]" htmlFor="gallery">загрузить</label>
+              <input
+                id="gallery"
+                name="gallery"
+                type="file"
+                className="file-upload"
+                multiple
+                onChange={handleFileChange}
+              />
+              <div className="flex gap-[50px]">
+                {caseData.gallery.map((photo, index) => (
+                  <img key={index} src={photo instanceof File ? URL.createObjectURL(photo) : photo.httpUrl} alt="Gallery" className="w-20 h-20 bg-white rounded-lg" />
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="block text-[24px] font-semibold text-uslugi-text">лого кейса</div>
+              <label className="upload-button w-[344px] mb-[34px]" htmlFor="mainPhoto">загрузить</label>
+              <input
+                id="mainPhoto"
+                name="mainPhoto"
+                type="file"
+                className="file-upload"
+                onChange={handleFileChange}
+              />
+              <div className="flex gap-[50px]">
+                {caseData.mainPhoto && (
+                  <img src={caseData.mainPhoto instanceof File ? URL.createObjectURL(caseData.mainPhoto) : caseData.mainPhoto.httpUrl} alt="Main Photo" className="w-20 h-20 bg-white rounded-lg" />
+                )}
+              </div>
+            </div>
           </div>
           <div className='flex justify-center mb-[90px] pb-[80px] mt-[100px]'>
-              <button className="border w-[210px] border-footer-icon bg-footer-icon text-[18px] text-white rounded-full px-6 py-[8px]">Сохранить</button>
-            </div>
+            <button onClick={handleSave} className="border w-[210px] border-footer-icon bg-footer-icon text-[18px] text-white rounded-full px-6 py-[8px]">Сохранить</button>
+          </div>
         </div>
       </div>
     </div>

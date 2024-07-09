@@ -1,6 +1,8 @@
 import { combineReducers } from 'redux';
-import exampleReducer from './exampleReducer'; // Путь к вашему редьюсеру
+import dataReducer from './dataReducer';
 
-export default combineReducers({
-  example: exampleReducer,
+const rootReducer = combineReducers({
+  data: dataReducer,
 });
+
+export default rootReducer;
