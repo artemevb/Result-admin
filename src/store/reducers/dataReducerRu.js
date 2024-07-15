@@ -1,42 +1,40 @@
 import {
-  FETCH_DATA_REQUEST, FETCH_DATA_SUCCESS, FETCH_DATA_FAILURE,
+  FETCH_DATARU_REQUEST, FETCH_DATARU_SUCCESS, FETCH_DATA_FAILURE,
   DELETE_CASE_REQUEST, DELETE_CASE_SUCCESS, DELETE_CASE_FAILURE,
-  FETCH_ARTICLES_REQUEST, FETCH_ARTICLES_SUCCESS, FETCH_ARTICLES_FAILURE,
-  DELETE_ARTICLE_REQUEST, DELETE_ARTICLE_SUCCESS, DELETE_ARTICLE_FAILURE, 
-  UPDATE_CASE_REQUEST,
-  UPDATE_CASE_SUCCESS,
-  UPDATE_CASE_FAILURE
-} from '../action/dataActions';
+  UPDATE_CASE_REQUEST, UPDATE_CASE_SUCCESS, UPDATE_CASE_FAILURE,
+  FETCH_ARTICLESRU_REQUEST, FETCH_ARTICLESRU_SUCCESS, FETCH_ARTICLES_FAILURE,
+  DELETE_ARTICLE_REQUEST, DELETE_ARTICLE_SUCCESS, DELETE_ARTICLE_FAILURE
+} from '../action/dataActionsRu';
 
 const initialState = {
   loading: false,
-  data: [],
-  articles: [],
+  dataRu: [],
+  articlesRu: [],
   error: null,
   updating: false,
   updateError: null,
 };
 
-const dataReducer = (state = initialState, action) => {
+const dataReducerRu = (state = initialState, action) => {
   switch (action.type) {
-    case FETCH_DATA_REQUEST:
-    case FETCH_ARTICLES_REQUEST:
+    case FETCH_DATARU_REQUEST:
+    case FETCH_ARTICLESRU_REQUEST:
       return {
         ...state,
         loading: true,
         error: null,
       };
-    case FETCH_DATA_SUCCESS:
+    case FETCH_DATARU_SUCCESS:
       return {
         ...state,
         loading: false,
-        data: action.payload,
+        dataRu: action.payload,
       };
-    case FETCH_ARTICLES_SUCCESS:
+    case FETCH_ARTICLESRU_SUCCESS:
       return {
         ...state,
         loading: false,
-        articles: action.payload,
+        articlesRu: action.payload,
       };
     case FETCH_DATA_FAILURE:
     case FETCH_ARTICLES_FAILURE:
@@ -56,16 +54,13 @@ const dataReducer = (state = initialState, action) => {
       return {
         ...state,
         loading: false,
-        data: {
-          ...state.data,
-          data: state.data.data.filter(item => item.id !== action.payload)
-        },
+        dataRu: state.dataRu.filter(item => item.id !== action.payload),
       };
     case DELETE_ARTICLE_SUCCESS:
       return {
         ...state,
         loading: false,
-        articles: state.articles.filter(item => item.id !== action.payload),
+        articlesRu: state.articlesRu.filter(item => item.id !== action.payload),
       };
     case DELETE_CASE_FAILURE:
     case DELETE_ARTICLE_FAILURE:
@@ -84,10 +79,9 @@ const dataReducer = (state = initialState, action) => {
       return {
         ...state,
         updating: false,
-        data: {
-          ...state.data,
-          data: state.data.data.map(item => item.id === action.payload.id ? action.payload : item)
-        },
+        dataRu: state.dataRu.map(item =>
+          item.id === action.payload.id ? action.payload : item
+        ),
       };
     case UPDATE_CASE_FAILURE:
       return {
@@ -100,4 +94,4 @@ const dataReducer = (state = initialState, action) => {
   }
 };
 
-export default dataReducer;
+export default dataReducerRu;

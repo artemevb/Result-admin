@@ -7,6 +7,7 @@ import Usluga from "./pages/Sama_usluga";
 import Delete from "./Modal/delete";
 import Form from "./Modal/Form";
 import Header from "./components/Header";
+// import CaseList from "./component/CaseList";
 
 function App() {
   return (
@@ -16,7 +17,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Form />} />
           <Route path="/Main" element={<Main />} />
-          <Route path="/Blog" element={<Blog />} />
+          <Route path="/Blog/:id" element={<Blog />} />
           <Route path="/admin_cases" element={<Cases />} />
           <Route path="/admin_cases/:id" element={<Cases />} />
           <Route path="/add_blog_cases" element={<AddBlogCases />} />

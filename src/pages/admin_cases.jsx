@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchData, updateCase } from '../store/action/dataActions';
+import { fetchDataRu, updateCase } from '../store/action/dataActionsRu';
+import { fetchDataUz } from '../store/action/dataActionsUz';
 
 const AdminCases = () => {
   const [quantity, setQuantity] = useState(3);
+  const [language, setLanguage] = useState('ru');
+
+  const toggleLanguage = () => {
+    setLanguage((prevLanguage) => (prevLanguage === 'ru' ? 'uz' : 'ru'));
+  };
 
   const changeValue = (step) => {
     setQuantity((prevQuantity) => Math.max(0, prevQuantity + step));
@@ -12,121 +18,292 @@ const AdminCases = () => {
 
   const { id } = useParams();
   const dispatch = useDispatch();
-  const dataState = useSelector(state => state.data);
-  const [caseData, setCaseData] = useState({
+  const dataStateRu = useSelector(state => state.dataRu);
+  const dataStateUz = useSelector(state => state.dataUz);
+  const [caseDataRu, setCaseDataRu] = useState({
     title: '',
     name: '',
     about: '',
     request: '',
     mainPhoto: null,
+    link: '',
     gallery: [],
+    caseResult: [],
+    effect: []
+  });
+  const [caseDataUz, setCaseDataUz] = useState({
+    title: '',
+    name: '',
+    about: '',
+    request: '',
+    mainPhoto: null,
+    link: '',
+    gallery: [],
+    caseResult: [],
+    effect: []
   });
 
   useEffect(() => {
-    dispatch(fetchData());
+    dispatch(fetchDataRu());
   }, [dispatch]);
 
   useEffect(() => {
-    if (dataState.data.data) {
-      const selectedCase = dataState.data.data.find(item => item.id === parseInt(id));
+    dispatch(fetchDataUz());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (dataStateRu.dataRu) {
+      const selectedCase = dataStateRu.dataRu.data.find(item => item.id === parseInt(id));
       if (selectedCase) {
-        setCaseData(selectedCase);
+        setCaseDataRu(selectedCase);
       }
     }
-  }, [dataState.data.data, id]);
+  }, [dataStateRu.dataRu, id]);
 
-  const handleChange = (e) => {
+  useEffect(() => {
+    if (dataStateUz.dataUz) {
+      const selectedCase = dataStateUz.dataUz.data.find(item => item.id === parseInt(id));
+      if (selectedCase) {
+        setCaseDataUz(selectedCase);
+      }
+    }
+  }, [dataStateUz.dataUz, id]);
+
+  const handleChange = (lang, e) => {
     const { name, value } = e.target;
-    setCaseData(prevState => ({
-      ...prevState,
-      [name]: value
-    }));
+    if (lang === 'ru') {
+      setCaseDataRu(prevState => ({
+        ...prevState,
+        [name]: value
+      }));
+    } else {
+      setCaseDataUz(prevState => ({
+        ...prevState,
+        [name]: value
+      }));
+    }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (lang, e) => {
     const { name, files } = e.target;
-    if (name === 'mainPhoto') {
-      setCaseData(prevState => ({
-        ...prevState,
-        mainPhoto: files[0]
-      }));
-    } else if (name === 'gallery') {
-      setCaseData(prevState => ({
-        ...prevState,
-        gallery: Array.from(files)
-      }));
+    if (lang === 'ru') {
+      if (name === 'mainPhoto') {
+        setCaseDataRu(prevState => ({
+          ...prevState,
+          mainPhoto: files[0]
+        }));
+      } else if (name === 'gallery') {
+        setCaseDataRu(prevState => ({
+          ...prevState,
+          gallery: [...prevState.gallery, ...Array.from(files)]
+        }));
+      }
+    } else {
+      if (name === 'mainPhoto') {
+        setCaseDataUz(prevState => ({
+          ...prevState,
+          mainPhoto: files[0]
+        }));
+      } else if (name === 'gallery') {
+        setCaseDataUz(prevState => ({
+          ...prevState,
+          gallery: [...prevState.gallery, ...Array.from(files)]
+        }));
+      }
     }
   };
 
   const handleSave = () => {
     const formData = new FormData();
-    formData.append('title', caseData.title);
-    formData.append('name', caseData.name);
-    formData.append('about', caseData.about);
-    formData.append('request', caseData.request);
+    formData.append('titleUz', caseDataUz.title);
+    formData.append('titleRu', caseDataRu.title);
+    formData.append('nameUz', caseDataUz.name);
+    formData.append('nameRu', caseDataRu.name);
+    formData.append('aboutUz', caseDataUz.about);
+    formData.append('aboutRu', caseDataRu.about);
+    formData.append('requestUz', caseDataUz.request);
+    formData.append('requestRu', caseDataRu.request);
+    formData.append('linkUz', caseDataUz.link || '');
+    formData.append('linkRu', caseDataRu.link || '');
+    formData.append('effectUz', JSON.stringify(caseDataUz.effect));
+    formData.append('effectRu', JSON.stringify(caseDataRu.effect));
+    formData.append('caseResultUz', JSON.stringify(caseDataUz.caseResult));
+    formData.append('caseResultRu', JSON.stringify(caseDataRu.caseResult));
 
-    if (caseData.mainPhoto) {
-      formData.append('mainPhoto', caseData.mainPhoto);
+    if (caseDataRu.mainPhoto instanceof File) {
+      formData.append('mainPhoto', caseDataRu.mainPhoto);
     }
-    caseData.gallery.forEach((photo, index) => {
-      formData.append(`gallery[${index}]`, photo);
+    caseDataRu.gallery.forEach((file) => {
+      if (file instanceof File) {
+        formData.append('gallery', file);
+      }
     });
+
+    console.log("Form Data before dispatch:");
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ': ' + pair[1]);
+    }
 
     dispatch(updateCase(id, formData));
   };
 
-  if (dataState.loading) return <div>Loading...</div>;
-  if (dataState.error) return <div>Error: {dataState.error}</div>;
+  if (dataStateRu.loading || dataStateUz.loading) return <div>Loading...</div>;
+  if (dataStateRu.error) return <div>Error: {dataStateRu.error}</div>;
+  if (dataStateUz.error) return <div>Error: {dataStateUz.error}</div>;
 
-  const renderSteps = () => {
+  const renderSteps = (lang) => {
+    const caseData = lang === 'ru' ? caseDataRu : caseDataUz;
     let steps = [];
     for (let i = 0; i < quantity; i++) {
+      const stepData = caseData.caseResult[i] || { title: '', value: [] };
       steps.push(
         <div key={i} className="flex flex-col mb-[20px]">
           <label htmlFor={`title-${i}`} className="block text-lg mb-2">Заголовок {i + 1}</label>
-          <input type="text" id={`title-${i}`} className="w-full border border-uslugi-text p-2 rounded-lg" />
+          <input
+            type="text"
+            id={`title-${i}`}
+            name={`title-${i}`}
+            value={stepData.title}
+            onChange={(e) => handleStepChange(lang, e, i, 'title')}
+            className="w-full border border-uslugi-text p-2 rounded-lg"
+          />
           <label htmlFor={`description-${i}`} className="block text-lg mb-2 mt-4">Описание {i + 1}</label>
-          <textarea id={`description-${i}`} className="w-full h-[150px] border border-uslugi-text p-2 rounded-lg mb-[25px]" rows="4" />
+          <textarea
+            id={`description-${i}`}
+            name={`description-${i}`}
+            value={stepData.value.join('\n')}
+            onChange={(e) => handleStepChange(lang, e, i, 'value')}
+            className="w-full h-[150px] border border-uslugi-text p-2 rounded-lg mb-[25px]"
+            rows="4"
+          />
         </div>
       );
     }
     return steps;
   };
 
+  const handleStepChange = (lang, e, index, field) => {
+    const { value } = e.target;
+    if (lang === 'ru') {
+      setCaseDataRu(prevState => {
+        const newCaseResult = [...prevState.caseResult];
+        if (!newCaseResult[index]) {
+          newCaseResult[index] = { title: '', value: [] };
+        }
+        if (field === 'title') {
+          newCaseResult[index].title = value;
+        } else if (field === 'value') {
+          newCaseResult[index].value = value.split('\n');
+        }
+        return { ...prevState, caseResult: newCaseResult };
+      });
+    } else {
+      setCaseDataUz(prevState => {
+        const newCaseResult = [...prevState.caseResult];
+        if (!newCaseResult[index]) {
+          newCaseResult[index] = { title: '', value: [] };
+        }
+        if (field === 'title') {
+          newCaseResult[index].title = value;
+        } else if (field === 'value') {
+          newCaseResult[index].value = value.split('\n');
+        }
+        return { ...prevState, caseResult: newCaseResult };
+      });
+    }
+  };
+
+  const renderEffects = (lang) => {
+    const caseData = lang === 'ru' ? caseDataRu : caseDataUz;
+    return caseData.effect.map((effect, index) => (
+      <div key={index} className="flex flex-col mb-[20px]">
+        <label htmlFor={`percent-${index}`} className="block text-lg mb-2">Процент</label>
+        <input
+          type="text"
+          id={`percent-${index}`}
+          name={`percent-${index}`}
+          value={effect.value}
+          onChange={(e) => handleEffectChange(lang, e, index, 'value')}
+          className="w-full border border-uslugi-text p-3 rounded-lg"
+        />
+        <label htmlFor={`description-${index}`} className="block text-lg mb-2 mt-4">Описание</label>
+        <input
+          type="text"
+          id={`description-${index}`}
+          name={`description-${index}`}
+          value={effect.effectDescription}
+          onChange={(e) => handleEffectChange(lang, e, index, 'effectDescription')}
+          className="w-full border border-uslugi-text p-3 rounded-lg"
+        />
+      </div>
+    ));
+  };
+
+  const handleEffectChange = (lang, e, index, field) => {
+    const { value } = e.target;
+    if (lang === 'ru') {
+      setCaseDataRu(prevState => {
+        const newEffects = [...prevState.effect];
+        newEffects[index][field] = value;
+        return { ...prevState, effect: newEffects };
+      });
+    } else {
+      setCaseDataUz(prevState => {
+        const newEffects = [...prevState.effect];
+        newEffects[index][field] = value;
+        return { ...prevState, effect: newEffects };
+      });
+    }
+  };
+
+  const currentCaseData = language === 'ru' ? caseDataRu : caseDataUz;
+
+  console.log("CaseDataRu", caseDataRu);
+  console.log("CaseDataUz", caseDataUz);
+
   return (
     <div className="mx-auto px-[100px]">
       <div className='bg-bg-admin rounded-lg'>
         <div className='pl-[8%] w-11/12'>
           <h1 className='text-uslugi-text text-[36px] text-center mb-[50px] pt-[30px]'>header</h1>
+          <div className='flex justify-end mb-[20px]'>
+            <button onClick={toggleLanguage} className="border border-footer-icon bg-footer-icon text-[18px] text-white rounded-full px-6 py-[8px]">
+              Переключить язык на {language === 'ru' ? 'узбекский' : 'русский'}
+            </button>
+          </div>
           <div className='mb-[50px]'>
             <label htmlFor="title" className="block text-lg mb-3">Заголовок</label>
-            <input             
+            <input
               type="text"
               id="title"
               name="title"
-              value={caseData.title}
-              onChange={handleChange}
+              value={currentCaseData.title}
+              onChange={(e) => handleChange(language, e)}
               className="w-full border border-uslugi-text p-3 rounded-lg" />
           </div>
           <h1 className='text-uslugi-text text-[36px] text-center mb-[50px]'>результаты</h1>
 
           <div className="flex flex-col">
             <label htmlFor="name" className="block text-lg mb-2">Подзаголовок</label>
-            <input               
+            <input
               type="text"
               id="name"
               name="name"
-              value={caseData.name} 
-              onChange={handleChange}
+              value={currentCaseData.name}
+              onChange={(e) => handleChange(language, e)}
               className="w-full border border-uslugi-text p-3 rounded-lg" />
           </div>
+          <div className="flex flex-col mt-20">
+            {renderEffects(language)}
+          </div>
+          <hr className="my-8 border-t-2 border-border  " />
           <div className="flex flex-col">
-            <label htmlFor="about" className="block text-lg mb-2 mt-20">О компании</label>
+            <label htmlFor="about" className="block text-lg mb-2">О компании</label>
             <textarea
               id="about"
               name="about"
-              value={caseData.about}
-              onChange={handleChange}
+              value={currentCaseData.about}
+              onChange={(e) => handleChange(language, e)}
               className="w-full border border-uslugi-text p-3 rounded-lg"
               rows="4"
             ></textarea>
@@ -136,8 +313,8 @@ const AdminCases = () => {
             <textarea
               id="request"
               name="request"
-              value={caseData.request}
-              onChange={handleChange}
+              value={currentCaseData.request}
+              onChange={(e) => handleChange(language, e)}
               className="w-full border border-uslugi-text p-3 rounded-lg"
               rows="4"
             ></textarea>
@@ -149,8 +326,8 @@ const AdminCases = () => {
               type="text"
               id="link"
               name="link"
-              value={caseData.link || ''}
-              onChange={handleChange}
+              value={currentCaseData.link || ''}
+              onChange={(e) => handleChange(language, e)}
               className="w-full border border-uslugi-text p-3 rounded-lg"
             />
           </div>
@@ -177,7 +354,7 @@ const AdminCases = () => {
               </div>
             </div>
             <div className="flex flex-col mb-[20px]">
-              {renderSteps()}
+              {renderSteps(language)}
             </div>
           </div>
           <hr className="my-8 border-t-2 border-border mb-[58px] " />
@@ -192,10 +369,10 @@ const AdminCases = () => {
                 type="file"
                 className="file-upload"
                 multiple
-                onChange={handleFileChange}
+                onChange={(e) => handleFileChange(language, e)}
               />
-              <div className="flex gap-[50px]">
-                {caseData.gallery.map((photo, index) => (
+              <div className="flex gap-[50px] flex-wrap">
+                {currentCaseData.gallery.map((photo, index) => (
                   <img key={index} src={photo instanceof File ? URL.createObjectURL(photo) : photo.httpUrl} alt="Gallery" className="w-20 h-20 bg-white rounded-lg" />
                 ))}
               </div>
@@ -208,11 +385,11 @@ const AdminCases = () => {
                 name="mainPhoto"
                 type="file"
                 className="file-upload"
-                onChange={handleFileChange}
+                onChange={(e) => handleFileChange(language, e)}
               />
               <div className="flex gap-[50px]">
-                {caseData.mainPhoto && (
-                  <img src={caseData.mainPhoto instanceof File ? URL.createObjectURL(caseData.mainPhoto) : caseData.mainPhoto.httpUrl} alt="Main Photo" className="w-20 h-20 bg-white rounded-lg" />
+                {currentCaseData.mainPhoto && (
+                  <img src={currentCaseData.mainPhoto instanceof File ? URL.createObjectURL(currentCaseData.mainPhoto) : currentCaseData.mainPhoto.httpUrl} alt="Main Photo" className="w-20 h-20 bg-white rounded-lg" />
                 )}
               </div>
             </div>

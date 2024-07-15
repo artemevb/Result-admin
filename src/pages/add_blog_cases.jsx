@@ -2,32 +2,58 @@ import React, { useState, useEffect } from 'react';
 import Plus from "../assets/plus.svg";
 import Delete from '../Modal/delete';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchData, deleteCase, fetchArticles, deleteArticle } from '../store/action/dataActions';
+import { fetchDataRu, deleteCase, fetchArticlesRU, deleteArticle, addCase, addArticle } from '../store/action/dataActionsRu';
+import { fetchDataUz } from '../store/action/dataActionsUz';
 import { useNavigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 
 const AddBlogCases = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState(null);
   const [deleteType, setDeleteType] = useState(null);
-
+  const [mainPhoto, setMainPhoto] = useState(null);
+  const [galleryPhotos, setGalleryPhotos] = useState([]);
+  const [bodyPhoto, setBodyPhoto] = useState(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const dataState = useSelector(state => state.data);
+  const dataStateRu = useSelector(state => state.dataRu);
+  console.log(dataStateRu);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      dispatch(fetchData());
-      dispatch(fetchArticles());
+      dispatch(fetchDataRu());
+      dispatch(fetchDataUz());
+      dispatch(fetchArticlesRU());
     }
   }, [dispatch]);
 
+  const handleMainPhotoChange = (e) => {
+    setMainPhoto(e.target.files[0]);
+  };
+
+  const handleGalleryChange = (e) => {
+    setGalleryPhotos(e.target.files);
+  };
+
+  const handleBodyPhotoChange = (e) => {
+    setBodyPhoto(e.target.files[0]);
+  };
+
   const addNewCase = () => {
-    // Логика добавления нового кейса
+    if (!mainPhoto || galleryPhotos.length === 0) {
+      alert('1)Загрузите фотографию 2)Загрузите фотографии для слайдера');
+      return;
+    }
+    dispatch(addCase(mainPhoto, galleryPhotos));
   };
 
   const addNewBlog = () => {
-    // Логика добавления нового блога
+    if (!mainPhoto || galleryPhotos.length === 0 || !bodyPhoto) {
+      alert('Загрузите главное фото, фото внутри страницы, главное фото на странице');
+      return;
+    }
+    dispatch(addArticle(mainPhoto, galleryPhotos, bodyPhoto));
   };
 
   const openDeleteModal = (id, type) => {
@@ -55,8 +81,12 @@ const AddBlogCases = () => {
     navigate(`/admin_cases/${id}`);
   };
 
-  if (dataState.loading) return <div>Loading...</div>;
-  if (dataState.error) return <div>Error: {dataState.error}</div>;
+  const handleBlog = (id) => {
+    navigate(`/Blog/${id}`);
+  };
+
+  if (dataStateRu.loading) return <div>Loading...</div>;
+  if (dataStateRu.error) return <div>Error: {dataStateRu.error}</div>;
 
   return (
     <>
@@ -71,8 +101,16 @@ const AddBlogCases = () => {
                 <h2 className="text-xl">добавить новый кейс</h2>
               </div>
             </button>
+            <div className="mb-4">
+              <label htmlFor="main-photo">Главное фото  </label>
+              <input type="file" id="main-photo" onChange={handleMainPhotoChange} />
+            </div>
+            <div className="mb-16">
+              <label htmlFor="gallery">Фото для слайдера  </label>
+              <input type="file" id="gallery" multiple onChange={handleGalleryChange} />
+            </div>
             <div className="grid grid-cols-2 gap-4">
-              {dataState.data.data && dataState.data.data.map(item => (
+              {dataStateRu.dataRu.data && dataStateRu.dataRu.data.map(item => (
                 <div className='h-[270px]' key={item.id}>
                   <div className="bg-footer-icon h-[212px] rounded-2xl"></div>
                   <div className="flex justify-between items-center p-2">
@@ -103,14 +141,26 @@ const AddBlogCases = () => {
                 <h2 className="text-xl">добавить новый блог</h2>
               </div>
             </button>
+            <div className="mb-4">
+              <label htmlFor="main-photo">Главное фото  </label>
+              <input type="file" id="main-photo" onChange={handleMainPhotoChange} />
+            </div>
+            <div className="mb-4">
+              <label htmlFor="gallery">Фото внутри страницы  </label>
+              <input type="file" id="gallery" multiple onChange={handleGalleryChange} />
+            </div>
+            <div className="mb-4">
+              <label htmlFor="body-photo">Главное фото на странице  </label>
+              <input type="file" id="body-photo" onChange={handleBodyPhotoChange} />
+            </div>
             <div className="grid grid-cols-2 gap-4">
-              {dataState.articles.data && dataState.articles.data.map(item => (
+              {dataStateRu.articlesRu.data && dataStateRu.articlesRu.data.map(item => (
                 <div className='h-[270px]' key={item.id}>
                   <div className="bg-footer-icon h-[212px] rounded-2xl"></div>
                   <div className="flex justify-between items-center p-2">
                     <button
                       className="border border-footer-icon bg-white text-cases-text rounded-full px-6 py-1"
-                      onClick={() => handleEdit(item.id)}
+                      onClick={() => handleBlog(item.id)}
                     >редактировать</button>
                     <button
                       className="bg-red-500 text-white rounded-full h-9 w-9 flex items-center justify-center"
@@ -125,6 +175,9 @@ const AddBlogCases = () => {
               ))}
             </div>
           </div>
+        </div>
+        <div className="z-[99999]">
+          <Toaster />
         </div>
       </div>
       {isDeleteModalOpen && (
