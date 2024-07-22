@@ -1,19 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchArticlesRU, fetchDataRu } from '../store/action/dataActionsRu';
-import { fetchArticlesUZ } from '../store/action/dataActionsUz';
-
+import { fetchArticles, caseData } from '../store/action/dataActions';
 
 const Blog = () => {
   const [quantity, setQuantity] = useState(1);
   const [fields, setFields] = useState(Array(quantity).fill({ title: '', description: '' }));
-
-  const [language, setLanguage] = useState('ru');
-
-  const toggleLanguage = () => {
-    setLanguage((prevLanguage) => (prevLanguage === 'ru' ? 'uz' : 'ru'));
-  };
 
   const changeValue = (step) => {
     setQuantity((prevQuantity) => {
@@ -31,73 +23,7 @@ const Blog = () => {
     });
   };
 
-  const handleFieldChange = (index, field, value) => {
-    const newFields = [...fields];
-    newFields[index][field] = value;
-    setFields(newFields);
-  };
-
   const { id } = useParams();
-  const dispatch = useDispatch();
-  const dataStateArctRu = useSelector(state => state.dataReducerRu.articlesRu);
-  const dataStateArctUz = useSelector(state => state.dataReducerUz.articlesUz);
-  const [articlesDataRu, setArticlesDataRu] = useState({
-    title: '',
-    theme: '',
-    plan: [],
-    mainPhoto: null,
-    bodyPhoto: [],
-    gallery: []
-  });
-  const [articlesDataUz, setArticlesDataUz] = useState({
-    title: '',
-    theme: '',
-    plan: [],
-    mainPhoto: null,
-    bodyPhoto: [],
-    gallery: []
-  });
-
-  useEffect(() => {
-    dispatch(fetchArticlesRU());
-  }, [dispatch]);
-  useEffect(() => {
-    dispatch(fetchDataRu());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (dataStateArctRu && dataStateArctRu.data && dataStateArctRu.data.length > 0) {
-      const article = dataStateArctRu.data.find(article => article.id === parseInt(id));
-      if (article) {
-        setArticlesDataRu(article);
-      }
-    }
-  }, [dataStateArctRu, id]);
-
-  useEffect(() => {
-    if (dataStateArctUz && dataStateArctUz.data && dataStateArctUz.data.length > 0) {
-      const article = dataStateArctUz.data.find(article => article.id === parseInt(id));
-      if (article) {
-        setArticlesDataUz(article);
-      }
-    }
-  }, [dataStateArctUz, id]);
-
-  const handleChange = (lang, e) => {
-    const { name, value } = e.target;
-    if (lang === 'ru') {
-      setArticlesDataRu(prevState => ({
-        ...prevState,
-        [name]: value
-      }));
-    } else {
-      setArticlesDataUz(prevState => ({
-        ...prevState,
-        [name]: value
-      }));
-    }
-  };
-
 
   return (
     <div className="mx-auto px-[100px] pb-[93px]">
@@ -110,8 +36,6 @@ const Blog = () => {
               type="text"
               id="title"
               name="title"
-              value={language === 'ru' ? articlesDataRu.title : articlesDataUz.title}
-              onChange={(e) => handleChange(language, e)}
               className="w-full border border-uslugi-text p-2 rounded-lg" />
           </div>
           <div className=' mb-[50px]'>
@@ -120,14 +44,12 @@ const Blog = () => {
               type="text"
               id="theme"
               name="theme"
-              value={language === 'ru' ? articlesDataRu.theme : articlesDataUz.theme}
-              onChange={(e) => handleChange(language, e)}
               className="w-full border border-uslugi-text p-2 rounded-lg" />
           </div>
           <div className="block text-[24px] text-uslugi-text">Картинка</div>
           <div className='flex flex-row gap-[30px] pb-[30px]'>
-            <label className="upload-button w-[444px] h-[60px] mb-[34px]" htmlFor="file-upload">загрузить</label>
-            <input id="bodyPhoto" type="file" className="file-upload" />
+            <label className="upload-button w-[444px] h-[60px] mb-[34px]" htmlFor="bodyPhotoUpload">загрузить</label>
+            <input id="bodyPhotoUpload" type="file" className="file-upload" />
             <div className="flex flex-row gap-[50px]">
               <div className="w-20 h-20 bg-white rounded-lg"></div>
             </div>
@@ -161,7 +83,6 @@ const Blog = () => {
                     type="text"
                     id={`title-${index}`}
                     value={field.title}
-                    onChange={(e) => handleFieldChange(index, 'title', e.target.value)}
                     className="w-full border border-uslugi-text p-2 rounded-lg"
                   />
                 </div>
@@ -170,7 +91,6 @@ const Blog = () => {
                   <textarea
                     id={`description-${index}`}
                     value={field.description}
-                    onChange={(e) => handleFieldChange(index, 'description', e.target.value)}
                     className="w-full border border-uslugi-text p-2 rounded-lg"
                     rows="4"
                   ></textarea>
@@ -181,8 +101,8 @@ const Blog = () => {
               <div>
                 <div className="block text-[24px] text-uslugi-text mt-[30px]">Картинка вначале страницы</div>
                 <div className='flex flex-row gap-[30px] pb-[30px]'>
-                  <label className="upload-button w-[344px] h-[60px] mb-[34px]" htmlFor="file-upload">загрузить</label>
-                  <input id="file-upload" type="file" className="file-upload" />
+                  <label className="upload-button w-[344px] h-[60px] mb-[34px]" htmlFor="initialImageUpload">загрузить</label>
+                  <input id="initialImageUpload" type="file" className="file-upload" />
                   <div className="flex flex-row gap-[50px]">
                     <div className="w-20 h-20 bg-white rounded-lg"></div>
                   </div>
@@ -191,8 +111,8 @@ const Blog = () => {
               <div className='ml-[17%]'>
                 <div className="block text-[24px] text-uslugi-text mt-[30px]">Главное фото </div>
                 <div className='flex flex-row gap-[30px] pb-[30px]'>
-                  <label className="upload-button w-[344px] h-[60px] mb-[34px]" htmlFor="file-upload">загрузить</label>
-                  <input id="file-upload" type="file" className="file-upload" />
+                  <label className="upload-button w-[344px] h-[60px] mb-[34px]" htmlFor="mainPhotoUpload">загрузить</label>
+                  <input id="mainPhotoUpload" type="file" className="file-upload" />
                   <div className="flex flex-row gap-[50px]">
                     <div className="w-20 h-20 bg-white rounded-lg"></div>
                   </div>
@@ -202,12 +122,20 @@ const Blog = () => {
 
             <h1 className='text-uslugi-text text-[36px] text-center  mt-[132px]'>заключение</h1>
             <div>
-              <label htmlFor="title" className="block text-[24px] mt-[39px]">Заголовок</label>
-              <input type="text" id="title" className="w-full border border-uslugi-text p-2 rounded-lg" />
+              <label htmlFor="conclusionTitle" className="block text-[24px] mt-[39px]">Заголовок</label>
+              <input
+                type="text"
+                id="conclusionTitle"
+                className="w-full border border-uslugi-text p-2 rounded-lg"
+              />
             </div>
             <div className="mt-[15px] pb-[20px]">
               <p className="text-uslugi-text text-[24px]">Описание</p>
-              <textarea id="description" className="w-full border border-uslugi-text p-2 rounded-lg" rows="5"></textarea>
+              <textarea
+                id="conclusionDescription"
+                className="w-full border border-uslugi-text p-2 rounded-lg"
+                rows="5"
+              ></textarea>
             </div>
             <div className='flex justify-center mb-[93px]'>
               <button className="border w-[200px] border-footer-icon bg-footer-icon text-[18px] text-white rounded-full px-6 py-[8px]">Сохранить</button>

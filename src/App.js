@@ -18,7 +18,7 @@ function App() {
           <Route path="/" element={<Form />} />
           <Route path="/Main" element={<Main />} />
           <Route path="/Blog/:id" element={<Blog />} />
-          <Route path="/admin_cases" element={<Cases />} />
+          {/* <Route path="/admin_cases" element={<Cases />} /> */}
           <Route path="/admin_cases/:id" element={<Cases />} />
           <Route path="/add_blog_cases" element={<AddBlogCases />} />
           <Route path="/sama_usluga" element={<Usluga />} />

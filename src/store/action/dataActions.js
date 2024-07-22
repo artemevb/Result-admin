@@ -1,9 +1,13 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-export const FETCH_DATARU_REQUEST = 'FETCH_DATARU_REQUEST';
-export const FETCH_DATARU_SUCCESS = 'FETCH_DATARU_SUCCESS';
+export const FETCH_DATA_REQUEST = 'FETCH_DATA_REQUEST';
+export const FETCH_DATA_SUCCESS = 'FETCH_DATA_SUCCESS';
 export const FETCH_DATA_FAILURE = 'FETCH_DATA_FAILURE';
+
+export const FETCH_CASE_BY_ID_REQUEST = 'FETCH_CASE_BY_ID_REQUEST'
+export const FETCH_CASE_BY_ID_SUCCESS = 'FETCH_CASE_BY_ID_SUCCESS';
+export const FETCH_CASE_BY_ID_FAILURE = 'FETCH_CASE_BY_ID_FAILURE';
 
 export const DELETE_CASE_REQUEST = 'DELETE_CASE_REQUEST';
 export const DELETE_CASE_SUCCESS = 'DELETE_CASE_SUCCESS';
@@ -23,8 +27,7 @@ const notifyArctError = () => toast.error('Блог не создан');
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
   return {
-    'Authorization': `Bearer ${token}`,
-    'Accept-Language': 'ru',
+    'Authorization': `Bearer ${token}`
   };
 };
 
@@ -81,17 +84,21 @@ export const addArticle = (mainPhoto, galleryPhotos, bodyPhoto) => {
 
 
 
-export const fetchDataRu = () => {
+export const fetchData = () => {
   return async (dispatch) => {
-    dispatch({ type: FETCH_DATARU_REQUEST });
+    dispatch({ type: FETCH_DATA_REQUEST });
+    const token = localStorage.getItem('token');
 
     try {
-      const responseRu = await axios.get(`${API_URL}/get-all`, {
-        headers: getAuthHeaders(),
+      const response = await axios.get(`${API_URL}/get-all`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept-Language': 'ru'
+          ,}
       });
 
-      if (responseRu.status === 200 && responseRu.data) {
-        dispatch({ type: FETCH_DATARU_SUCCESS, payload: responseRu.data });
+      if (response.status === 200 && response.data) {
+        dispatch({ type: FETCH_DATA_SUCCESS, payload: response.data });
       } else {
         throw new Error('Invalid response from server');
       }
@@ -101,6 +108,33 @@ export const fetchDataRu = () => {
     }
   };
 };
+
+export const fetchCaseById = (id) => async (dispatch) => {
+  const token = localStorage.getItem('token');
+  dispatch({ type: FETCH_CASE_BY_ID_REQUEST });
+
+  try {
+    const response = await fetch(`http://213.230.91.55:9000/case/get-all/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept-Language': 'ru',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    dispatch({ type: FETCH_CASE_BY_ID_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({ type: FETCH_CASE_BY_ID_FAILURE, error: error.message });
+  }
+};
+
+
+
+
 
 export const deleteCase = (id) => {
   return async (dispatch) => {
@@ -126,12 +160,13 @@ export const deleteCase = (id) => {
 export const updateCase = (id, caseData) => {
   return async (dispatch) => {
     dispatch({ type: UPDATE_CASE_REQUEST });
+    const token = localStorage.getItem('token');
 
     try {
       const response = await axios.put(`${API_URL}/update/${id}`, caseData, {
         headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
       });
 
@@ -153,8 +188,8 @@ export const updateCase = (id, caseData) => {
 // Новости
 
 
-export const FETCH_ARTICLESRU_REQUEST = 'FETCH_ARTICLESRU_REQUEST';
-export const FETCH_ARTICLESRU_SUCCESS = 'FETCH_ARTICLESRU_SUCCESS';
+export const FETCH_ARTICLES_REQUEST = 'FETCH_ARTICLES_REQUEST';
+export const FETCH_ARTICLES_SUCCESS = 'FETCH_ARTICLES_SUCCESS';
 export const FETCH_ARTICLES_FAILURE = 'FETCH_ARTICLES_FAILURE';
 
 export const DELETE_ARTICLE_REQUEST = 'DELETE_ARTICLE_REQUEST';
@@ -174,8 +209,7 @@ export const deleteArticle = (id) => {
     try {
       const response = await axios.delete(`http://213.230.91.55:9000/article/delete/${id}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept-Language': 'ru'
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -194,22 +228,22 @@ export const deleteArticle = (id) => {
   };
 };
 
-export const fetchArticlesRU = () => {
+export const fetchArticles = () => {
   return async (dispatch) => {
-    dispatch({ type: FETCH_ARTICLESRU_REQUEST });
+    dispatch({ type: FETCH_ARTICLES_REQUEST });
 
     const token = localStorage.getItem('token');
 
     try {
-      const responseRu = await axios.get('http://213.230.91.55:9000/article/get-all', {
+      const response = await axios.get('http://213.230.91.55:9000/article/get-all', {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Accept-Language': 'ru'
+          'Accept-Language': 'ru',
         }
       });
 
-      if (responseRu.status === 200 && responseRu.data) {
-        dispatch({ type: FETCH_ARTICLESRU_SUCCESS, payload: responseRu.data });
+      if (response.status === 200 && response.data) {
+        dispatch({ type: FETCH_ARTICLES_SUCCESS, payload: response.data });
       } else {
         throw new Error('Invalid response from server');
       }

@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Plus from "../assets/plus.svg";
 import Delete from '../Modal/delete';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchDataRu, deleteCase, fetchArticlesRU, deleteArticle, addCase, addArticle } from '../store/action/dataActionsRu';
-import { fetchDataUz } from '../store/action/dataActionsUz';
+import { fetchData, deleteCase, fetchArticles, deleteArticle, addCase, addArticle } from '../store/action/dataActions';
 import { useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
@@ -16,15 +15,14 @@ const AddBlogCases = () => {
   const [bodyPhoto, setBodyPhoto] = useState(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const dataStateRu = useSelector(state => state.dataRu);
-  console.log(dataStateRu);
+  const dataState = useSelector(state => state.data);
+  console.log(dataState);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      dispatch(fetchDataRu());
-      dispatch(fetchDataUz());
-      dispatch(fetchArticlesRU());
+      dispatch(fetchData());
+      dispatch(fetchArticles());
     }
   }, [dispatch]);
 
@@ -85,8 +83,8 @@ const AddBlogCases = () => {
     navigate(`/Blog/${id}`);
   };
 
-  if (dataStateRu.loading) return <div>Loading...</div>;
-  if (dataStateRu.error) return <div>Error: {dataStateRu.error}</div>;
+  if (dataState.loading) return <div>Loading...</div>;
+  if (dataState.error) return <div>Error: {dataState.error}</div>;
 
   return (
     <>
@@ -110,7 +108,7 @@ const AddBlogCases = () => {
               <input type="file" id="gallery" multiple onChange={handleGalleryChange} />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              {dataStateRu.dataRu.data && dataStateRu.dataRu.data.map(item => (
+              {dataState.data.data && dataState.data.data.map(item => (
                 <div className='h-[270px]' key={item.id}>
                   <div className="bg-footer-icon h-[212px] rounded-2xl"></div>
                   <div className="flex justify-between items-center p-2">
@@ -154,7 +152,7 @@ const AddBlogCases = () => {
               <input type="file" id="body-photo" onChange={handleBodyPhotoChange} />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              {dataStateRu.articlesRu.data && dataStateRu.articlesRu.data.map(item => (
+              {dataState.articles.data && dataState.articles.data.map(item => (
                 <div className='h-[270px]' key={item.id}>
                   <div className="bg-footer-icon h-[212px] rounded-2xl"></div>
                   <div className="flex justify-between items-center p-2">
