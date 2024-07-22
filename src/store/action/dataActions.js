@@ -157,13 +157,13 @@ export const deleteCase = (id) => {
   };
 };
 
-export const updateCase = (id, caseData) => {
+export const updateCase = (caseData) => {
   return async (dispatch) => {
     dispatch({ type: UPDATE_CASE_REQUEST });
     const token = localStorage.getItem('token');
-
+    console.log(caseData)
     try {
-      const response = await axios.put(`${API_URL}/update/${id}`, caseData, {
+      const response = await axios.put(`${API_URL}/update/${caseData.id}`, caseData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
