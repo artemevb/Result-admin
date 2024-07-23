@@ -161,12 +161,14 @@ export const updateCase = (caseData) => {
   return async (dispatch) => {
     dispatch({ type: UPDATE_CASE_REQUEST });
     const token = localStorage.getItem('token');
-    console.log(caseData)
+    const formData = new FormData();
+    formData.append('json', JSON.stringify(caseData));
+
     try {
-      const response = await axios.put(`${API_URL}/update/${caseData.id}`, caseData, {
+      const response = await axios.put(`${API_URL}/update/${caseData.id}`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'multipart/form-data'
         },
       });
 
