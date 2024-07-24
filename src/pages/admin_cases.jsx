@@ -93,16 +93,16 @@ const AdminCases = () => {
       titleRu: field.title,
       valueRu: field.description.split('\n') // Преобразовать строку обратно в массив
     }));
-  
+
     const updatedEffects = effects.map((effect, index) => ({
       ...allDataRu.effect[index],
       value: effect.value,
       effectDescriptionRu: effect.effectDescription // Используем правильный ключ здесь
     }));
-  
+
     dispatch(updateCase({ ...allDataRu, caseResult: updatedCaseResults, effect: updatedEffects, id, mainPhoto }));
   };
-  
+
 
   const handleRequestChange = (e) => {
     const requestArray = e.target.value.split('\n'); // Преобразовать строку обратно в массив(для "запросы")
@@ -359,13 +359,13 @@ const AdminCases = () => {
               >
                 Сохранить
               </button>
-              </div>
-
             </div>
+
           </div>
         </div>
       </div>
-      );
+    </div>
+  );
 };
 
-      export default AdminCases;
+export default AdminCases;

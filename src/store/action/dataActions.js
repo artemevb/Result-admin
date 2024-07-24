@@ -94,7 +94,8 @@ export const fetchData = () => {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept-Language': 'ru'
-          ,}
+          ,
+        }
       });
 
       if (response.status === 200 && response.data) {
@@ -167,7 +168,7 @@ export const updateCase = (caseData) => {
     if (caseData.mainPhoto) {
       formData.append('main-photo', caseData.mainPhoto); // Используем 'main-photo'
     }
-    
+
     if (caseData.gallery) {
       formData.append('gallery', caseData.gallery); // Используем 'main-photo'
     }
