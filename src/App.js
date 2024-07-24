@@ -3,7 +3,7 @@ import Blog from "./pages/Blog";
 import AddBlogCases from "./pages/add_blog_cases";
 import Cases from "./pages/admin_cases";
 import Main from "./pages/Main";
-import Usluga from "./pages/Sama_usluga";
+import Usluga from "./pages/sama_usluga";
 import Delete from "./Modal/delete";
 import Form from "./Modal/Form";
 import Header from "./components/Header";
