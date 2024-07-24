@@ -11,6 +11,7 @@ const AdminCases = () => {
 
   const [allDataRu, setAllDataRu] = useState({});
   const [allDataUz, setAllDataUz] = useState({});
+  const [mainPhoto, setMainPhoto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [fields, setFields] = useState([{ title: '', value: [] }]);
@@ -78,22 +79,30 @@ const AdminCases = () => {
       setLoading(false);
     });
   }, [id, token]);
-
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setMainPhoto(file);
+    setAllDataRu({
+      ...allDataRu,
+      mainPhoto: { httpUrl: URL.createObjectURL(file) },
+    });
+  };
   const handleSubmit = () => {
     const updatedCaseResults = fields.map((field, index) => ({
       ...allDataRu.caseResult[index],
       titleRu: field.title,
       valueRu: field.description.split('\n') // Преобразовать строку обратно в массив
     }));
-
+  
     const updatedEffects = effects.map((effect, index) => ({
       ...allDataRu.effect[index],
       value: effect.value,
       effectDescriptionRu: effect.effectDescription // Используем правильный ключ здесь
     }));
-
-    dispatch(updateCase({ ...allDataRu, caseResult: updatedCaseResults, effect: updatedEffects, id }));
+  
+    dispatch(updateCase({ ...allDataRu, caseResult: updatedCaseResults, effect: updatedEffects, id, mainPhoto }));
   };
+  
 
   const handleRequestChange = (e) => {
     const requestArray = e.target.value.split('\n'); // Преобразовать строку обратно в массив(для "запросы")
@@ -109,7 +118,7 @@ const AdminCases = () => {
       <div className="bg-bg-admin rounded-lg">
         <div className="pl-[8%] w-11/12">
           <h1 className="text-uslugi-text text-[36px] text-center mb-[50px] pt-[30px]">
-            header {/* {allDataRu.nameRu || "header"} */}
+            header
           </h1>
           <div className="mb-[50px]">
             <label htmlFor="titlee" className="block text-lg mb-3">
@@ -333,13 +342,7 @@ const AdminCases = () => {
                 name="mainPhoto"
                 type="file"
                 className="file-upload"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  setAllDataRu({
-                    ...allDataRu,
-                    mainPhoto: { httpUrl: URL.createObjectURL(file) },
-                  });
-                }}
+                onChange={handleFileChange}
               />
               <div className="flex gap-[50px]">
                 {allDataRu.mainPhoto && (
@@ -350,20 +353,19 @@ const AdminCases = () => {
                   />
                 )}
               </div>
+              <button
+                className="border w-[210px] border-footer-icon bg-footer-icon text-[18px] text-white rounded-full px-6 py-[8px]"
+                onClick={handleSubmit}
+              >
+                Сохранить
+              </button>
+              </div>
+
             </div>
-          </div>
-          <div className="flex justify-center mb-[90px] pb-[80px] mt-[100px]">
-            <button
-              className="border w-[210px] border-footer-icon bg-footer-icon text-[18px] text-white rounded-full px-6 py-[8px]"
-              onClick={handleSubmit}
-            >
-              Сохранить
-            </button>
           </div>
         </div>
       </div>
-    </div>
-  );
+      );
 };
 
-export default AdminCases;
+      export default AdminCases;

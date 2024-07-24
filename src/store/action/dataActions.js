@@ -94,8 +94,7 @@ export const fetchData = () => {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept-Language': 'ru'
-          ,
-        }
+          ,}
       });
 
       if (response.status === 200 && response.data) {
@@ -165,6 +164,16 @@ export const updateCase = (caseData) => {
     const formData = new FormData();
     formData.append('json', JSON.stringify(caseData));
 
+    if (caseData.mainPhoto) {
+      formData.append('main-photo', caseData.mainPhoto); // Используем 'main-photo'
+    }
+    
+    if (caseData.gallery) {
+      formData.append('gallery', caseData.gallery); // Используем 'main-photo'
+    }
+
+    console.log(caseData)
+
     try {
       const response = await axios.put(`${API_URL}/update/${caseData.id}`, formData, {
         headers: {
@@ -183,6 +192,7 @@ export const updateCase = (caseData) => {
     }
   };
 };
+
 
 
 
