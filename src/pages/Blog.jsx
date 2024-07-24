@@ -1,61 +1,204 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchArticles, caseData } from '../store/action/dataActions';
+import axios from 'axios';
 
 const Blog = () => {
+  const { id } = useParams();
   const [quantity, setQuantity] = useState(1);
-  const [fields, setFields] = useState(Array(quantity).fill({ title: '', description: '' }));
+  const [fieldsRu, setFieldsRu] = useState([]);
+  const [fieldsUz, setFieldsUz] = useState([]);
+  const [titleRu, setTitleRu] = useState('');
+  const [titleUz, setTitleUz] = useState('');
+  const [themeRu, setThemeRu] = useState('');
+  const [themeUz, setThemeUz] = useState('');
+  const [conclusionTitleRu, setConclusionTitleRu] = useState('');
+  const [conclusionTitleUz, setConclusionTitleUz] = useState('');
+  const [conclusionDescriptionRu, setConclusionDescriptionRu] = useState('');
+  const [conclusionDescriptionUz, setConclusionDescriptionUz] = useState('');
+  const [mainPhoto, setMainPhoto] = useState(null);
+  const [bodyPhoto, setBodyPhoto] = useState(null);
+  const [gallery, setGallery] = useState([]);
+  const [newMainPhoto, setNewMainPhoto] = useState(null);
+  const [newBodyPhoto, setNewBodyPhoto] = useState(null);
+  const [newGalleryPhoto, setNewGalleryPhoto] = useState(null);
+  const [language, setLanguage] = useState('ru');
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    axios.get(`http://213.230.91.55:9000/article/get-full-data/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+      .then(response => {
+        const data = response.data.data;
+        setTitleRu(data.titleRu || '');
+        setTitleUz(data.titleUz || '');
+        setThemeRu(data.themeRu || '');
+        setThemeUz(data.themeUz || '');
+        setFieldsRu(data.plan.map(plan => ({
+          title: plan.nameRu,
+          description: plan.textRu
+        })));
+        setFieldsUz(data.plan.map(plan => ({
+          title: plan.nameUz,
+          description: plan.textUz
+        })));
+        setConclusionTitleRu(data.conclusion?.nameRu || '');
+        setConclusionTitleUz(data.conclusion?.nameUz || '');
+        setConclusionDescriptionRu(data.conclusion?.textRu || '');
+        setConclusionDescriptionUz(data.conclusion?.textUz || '');
+        setMainPhoto(data.mainPhoto?.httpUrl || null);
+        setBodyPhoto(data.bodyPhoto?.httpUrl || null);
+        setGallery(data.gallery.map(photo => photo.httpUrl));
+        setQuantity(data.plan.length || 1);
+      })
+      .catch(error => {
+        console.error("There was an error fetching the article data!", error);
+      });
+  }, [id]);
 
   const changeValue = (step) => {
     setQuantity((prevQuantity) => {
       const newQuantity = Math.max(0, prevQuantity + step);
-      const newFields = [...fields];
+      const newFieldsRu = [...fieldsRu];
+      const newFieldsUz = [...fieldsUz];
 
       if (newQuantity > prevQuantity) {
-        newFields.push({ title: '', description: '' });
+        newFieldsRu.push({ title: '', description: '' });
+        newFieldsUz.push({ title: '', description: '' });
       } else {
-        newFields.pop();
+        newFieldsRu.pop();
+        newFieldsUz.pop();
       }
 
-      setFields(newFields);
+      setFieldsRu(newFieldsRu);
+      setFieldsUz(newFieldsUz);
       return newQuantity;
     });
   };
 
-  const { id } = useParams();
+  const handleFieldChange = (index, field, value, lang) => {
+    if (lang === 'ru') {
+      const newFields = [...fieldsRu];
+      newFields[index][field] = value;
+      setFieldsRu(newFields);
+    } else {
+      const newFields = [...fieldsUz];
+      newFields[index][field] = value;
+      setFieldsUz(newFields);
+    }
+  };
+
+  const handlePhotoChange = (event, setPhoto, setNewPhoto) => {
+    setPhoto(URL.createObjectURL(event.target.files[0]));
+    setNewPhoto(event.target.files[0]);
+  };
+
+  const handleGalleryChange = (event) => {
+    const file = event.target.files[0];
+    setGallery([URL.createObjectURL(file)]);
+    setNewGalleryPhoto(file);
+  };
+
+  const handleUpdate = () => {
+    const updatedArticle = {
+      titleRu: titleRu,
+      titleUz: titleUz,
+      themeRu: themeRu,
+      themeUz: themeUz,
+      plan: fieldsRu.map((field, index) => ({
+        id: null, // assuming IDs are not required for the update
+        nameRu: fieldsRu[index].title,
+        textRu: fieldsRu[index].description,
+        nameUz: fieldsUz[index].title,
+        textUz: fieldsUz[index].description
+      })),
+      conclusion: {
+        id: null, // assuming IDs are not required for the update
+        nameRu: conclusionTitleRu,
+        textRu: conclusionDescriptionRu,
+        nameUz: conclusionTitleUz,
+        textUz: conclusionDescriptionUz
+      }
+    };
+
+    const formData = new FormData();
+    formData.append('json', JSON.stringify(updatedArticle));
+
+    if (newMainPhoto) {
+      formData.append('main-photo', newMainPhoto);
+    }
+
+    if (newBodyPhoto) {
+      formData.append('body-photo', newBodyPhoto);
+    }
+
+    if (newGalleryPhoto) {
+      formData.append('gallery', newGalleryPhoto);
+    }
+
+    const token = localStorage.getItem('token');
+    axios.put(`http://213.230.91.55:9000/article/update/${id}`, formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+      .then(response => {
+        console.log('Article updated successfully', response.data);
+      })
+      .catch(error => {
+        console.error("There was an error updating the article!", error);
+      });
+  };
 
   return (
     <div className="mx-auto px-[100px] pb-[93px]">
       <div className='bg-bg-admin rounded-lg'>
         <div className='pl-[8%] w-11/12'>
+          <button onClick={() => setLanguage(language === 'ru' ? 'uz' : 'ru')} className='px-6 py-2 border border-violet-400 rounded-full mt-12'>
+            {language === 'ru' ? 'Uzbek' : 'русский'}
+          </button>
           <h1 className='text-uslugi-text text-[36px] text-center mb-[50px] pt-[30px]'>header</h1>
-          <div className=' mb-[50px]'>
+          <div className='mb-[50px]'>
             <label htmlFor="title" className="block text-[24px] mb-2">Заголовок</label>
             <input
               type="text"
               id="title"
               name="title"
-              className="w-full border border-uslugi-text p-2 rounded-lg" />
+              value={language === 'ru' ? titleRu : titleUz}
+              onChange={(e) => language === 'ru' ? setTitleRu(e.target.value) : setTitleUz(e.target.value)}
+              className="w-full border border-uslugi-text p-2 rounded-lg"
+            />
           </div>
-          <div className=' mb-[50px]'>
+          <div className='mb-[50px]'>
             <label htmlFor="theme" className="block text-[24px] mb-2">Тема</label>
             <input
               type="text"
               id="theme"
               name="theme"
-              className="w-full border border-uslugi-text p-2 rounded-lg" />
+              value={language === 'ru' ? themeRu : themeUz}
+              onChange={(e) => language === 'ru' ? setThemeRu(e.target.value) : setThemeUz(e.target.value)}
+              className="w-full border border-uslugi-text p-2 rounded-lg"
+            />
           </div>
           <div className="block text-[24px] text-uslugi-text">Картинка</div>
           <div className='flex flex-row gap-[30px] pb-[30px]'>
             <label className="upload-button w-[444px] h-[60px] mb-[34px]" htmlFor="bodyPhotoUpload">загрузить</label>
-            <input id="bodyPhotoUpload" type="file" className="file-upload" />
+            <input 
+              id="bodyPhotoUpload" 
+              type="file" 
+              className="file-upload" 
+              onChange={(e) => handlePhotoChange(e, setBodyPhoto, setNewBodyPhoto)} 
+            />
             <div className="flex flex-row gap-[50px]">
-              <div className="w-20 h-20 bg-white rounded-lg"></div>
+              <div className="w-20 h-20 bg-white rounded-lg">
+                {bodyPhoto && <img src={bodyPhoto} alt="Body" />}
+              </div>
             </div>
           </div>
-          <hr className="my-8 border-t-2 border-border mb-[34px] " />
-          <h1 className='text-uslugi-text text-[36px] text-center  pt-[30px]'>body</h1>
+          <hr className="my-8 border-t-2 border-border mb-[34px]" />
+          <h1 className='text-uslugi-text text-[36px] text-center pt-[30px]'>body</h1>
           <div className="flex flex-col">
             <div className='flex flex-row items-center mb-[84px]'>
               <label htmlFor="quantity" className="block text-lg mb-2 mr-4">Количество этапов</label>
@@ -75,14 +218,15 @@ const Blog = () => {
                 </div>
               </div>
             </div>
-            {fields.map((field, index) => (
+            {fieldsRu.map((field, index) => (
               <div key={index} className="mb-[50px]">
-                <div className=' mb-[50px]'>
+                <div className='mb-[50px]'>
                   <label htmlFor={`title-${index}`} className="block text-[24px] mb-2">Заголовок {index + 1}</label>
                   <input
                     type="text"
                     id={`title-${index}`}
-                    value={field.title}
+                    value={language === 'ru' ? fieldsRu[index].title : fieldsUz[index].title}
+                    onChange={(e) => handleFieldChange(index, 'title', e.target.value, language)}
                     className="w-full border border-uslugi-text p-2 rounded-lg"
                   />
                 </div>
@@ -90,7 +234,8 @@ const Blog = () => {
                   <p className="text-uslugi-text text-[24px]">Описание {index + 1}</p>
                   <textarea
                     id={`description-${index}`}
-                    value={field.description}
+                    value={language === 'ru' ? fieldsRu[index].description : fieldsUz[index].description}
+                    onChange={(e) => handleFieldChange(index, 'description', e.target.value, language)}
                     className="w-full border border-uslugi-text p-2 rounded-lg"
                     rows="4"
                   ></textarea>
@@ -102,30 +247,48 @@ const Blog = () => {
                 <div className="block text-[24px] text-uslugi-text mt-[30px]">Картинка вначале страницы</div>
                 <div className='flex flex-row gap-[30px] pb-[30px]'>
                   <label className="upload-button w-[344px] h-[60px] mb-[34px]" htmlFor="initialImageUpload">загрузить</label>
-                  <input id="initialImageUpload" type="file" className="file-upload" />
+                  <input 
+                    id="initialImageUpload" 
+                    type="file" 
+                    className="file-upload" 
+                    onChange={(e) => handlePhotoChange(e, setMainPhoto, setNewMainPhoto)}
+                  />
                   <div className="flex flex-row gap-[50px]">
-                    <div className="w-20 h-20 bg-white rounded-lg"></div>
+                    <div className="w-20 h-20 bg-white rounded-lg">
+                      {mainPhoto && <img src={mainPhoto} alt="Main" />}
+                    </div>
                   </div>
                 </div>
               </div>
               <div className='ml-[17%]'>
-                <div className="block text-[24px] text-uslugi-text mt-[30px]">Главное фото </div>
+                <div className="block text-[24px] text-uslugi-text mt-[30px]">Главное фото</div>
                 <div className='flex flex-row gap-[30px] pb-[30px]'>
-                  <label className="upload-button w-[344px] h-[60px] mb-[34px]" htmlFor="mainPhotoUpload">загрузить</label>
-                  <input id="mainPhotoUpload" type="file" className="file-upload" />
+                  <label className="upload-button w-[344px] h-[60px] mb-[34px]" htmlFor="galleryUpload">загрузить</label>
+                  <input 
+                    id="galleryUpload" 
+                    type="file" 
+                    className="file-upload" 
+                    onChange={handleGalleryChange} 
+                  />
                   <div className="flex flex-row gap-[50px]">
-                    <div className="w-20 h-20 bg-white rounded-lg"></div>
+                    {gallery.map((url, index) => (
+                      <div key={index} className="w-20 h-20 bg-white rounded-lg">
+                        <img src={url} alt={`Gallery ${index}`} />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
 
-            <h1 className='text-uslugi-text text-[36px] text-center  mt-[132px]'>заключение</h1>
+            <h1 className='text-uslugi-text text-[36px] text-center mt-[132px]'>заключение</h1>
             <div>
               <label htmlFor="conclusionTitle" className="block text-[24px] mt-[39px]">Заголовок</label>
               <input
                 type="text"
                 id="conclusionTitle"
+                value={language === 'ru' ? conclusionTitleRu : conclusionTitleUz}
+                onChange={(e) => language === 'ru' ? setConclusionTitleRu(e.target.value) : setConclusionTitleUz(e.target.value)}
                 className="w-full border border-uslugi-text p-2 rounded-lg"
               />
             </div>
@@ -133,12 +296,14 @@ const Blog = () => {
               <p className="text-uslugi-text text-[24px]">Описание</p>
               <textarea
                 id="conclusionDescription"
+                value={language === 'ru' ? conclusionDescriptionRu : conclusionDescriptionUz}
+                onChange={(e) => language === 'ru' ? setConclusionDescriptionRu(e.target.value) : setConclusionDescriptionUz(e.target.value)}
                 className="w-full border border-uslugi-text p-2 rounded-lg"
                 rows="5"
               ></textarea>
             </div>
             <div className='flex justify-center mb-[93px]'>
-              <button className="border w-[200px] border-footer-icon bg-footer-icon text-[18px] text-white rounded-full px-6 py-[8px]">Сохранить</button>
+              <button onClick={handleUpdate} className="border w-[200px] border-footer-icon bg-footer-icon text-[18px] text-white rounded-full px-6 py-[8px]">Сохранить</button>
             </div>
           </div>
         </div>
