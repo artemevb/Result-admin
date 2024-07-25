@@ -29,6 +29,8 @@ const Form = () => {
             password
         }).then((response) => {
             let token = response.data.data.token;
+            console.log("Response of auth", response)
+            console.log("Token of auth", token)
             localStorage.setItem('token', token);
             if (token) {
                 navigate("/add_blog_cases");
