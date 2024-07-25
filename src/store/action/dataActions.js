@@ -166,14 +166,14 @@ export const updateCase = (caseData) => {
     formData.append('json', JSON.stringify(caseData));
 
     if (caseData.mainPhoto) {
-      formData.append('main-photo', caseData.mainPhoto); // Используем 'main-photo'
+      formData.append('main-photo', caseData.mainPhoto);
     }
 
-    if (caseData.gallery) {
-      formData.append('gallery', caseData.gallery); // Используем 'main-photo'
+    if (caseData.gallery && caseData.gallery.length > 0) {
+      caseData.gallery.forEach(file => {
+        formData.append('gallery', file);
+      });
     }
-
-    console.log(caseData)
 
     try {
       const response = await axios.put(`${API_URL}/update/${caseData.id}`, formData, {
@@ -193,10 +193,6 @@ export const updateCase = (caseData) => {
     }
   };
 };
-
-
-
-
 
 
 // Новости

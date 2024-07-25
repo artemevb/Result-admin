@@ -9,48 +9,52 @@ const AdminCases = () => {
   const token = localStorage.getItem('token');
   const dispatch = useDispatch();
 
-  const [allDataRu, setAllDataRu] = useState({});
-  const [allDataUz, setAllDataUz] = useState({});
+  const [allData, setAllData] = useState({});
   const [mainPhoto, setMainPhoto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [fields, setFields] = useState([{ title: '', value: [] }]);
-  const [effects, setEffects] = useState([
-    { value: '', effectDescription: '' },
-    { value: '', effectDescription: '' },
-    { value: '', effectDescription: '' }
-  ]);
+  const [fieldsRu, setFieldsRu] = useState([{ title: '', description: '' }]);
+  const [fieldsUz, setFieldsUz] = useState([{ title: '', description: '' }]);
+  const [effectsRu, setEffectsRu] = useState([{ value: '', effectDescription: '' }]);
+  const [effectsUz, setEffectsUz] = useState([{ value: '', effectDescription: '' }]);
+  const [language, setLanguage] = useState('ru');
 
   const changeValue = (step) => {
     setQuantity((prevQuantity) => {
       const newQuantity = Math.max(0, prevQuantity + step);
-      const newFields = [...fields];
+      const newFieldsRu = [...fieldsRu];
+      const newFieldsUz = [...fieldsUz];
 
       if (newQuantity > prevQuantity) {
-        newFields.push({ title: '', description: '' });
+        newFieldsRu.push({ title: '', description: '' });
+        newFieldsUz.push({ title: '', description: '' });
       } else {
-        newFields.pop();
+        newFieldsRu.pop();
+        newFieldsUz.pop();
       }
 
-      setFields(newFields);
+      setFieldsRu(newFieldsRu);
+      setFieldsUz(newFieldsUz);
       return newQuantity;
     });
   };
 
   const changeEffectCount = (step) => {
-    setQuantity((prevQuantity) => {
-      const newQuantity = Math.max(0, prevQuantity + step);
-      const newEffects = [...effects];
+    const newQuantity = Math.max(0, quantity + step);
+    const newEffectsRu = [...effectsRu];
+    const newEffectsUz = [...effectsUz];
 
-      if (newQuantity > prevQuantity) {
-        newEffects.push({ value: '', effectDescription: '' });
-      } else {
-        newEffects.pop();
-      }
+    if (newQuantity > quantity) {
+      newEffectsRu.push({ value: '', effectDescription: '' });
+      newEffectsUz.push({ value: '', effectDescription: '' });
+    } else {
+      newEffectsRu.pop();
+      newEffectsUz.pop();
+    }
 
-      setEffects(newEffects);
-      return newQuantity;
-    });
+    setEffectsRu(newEffectsRu);
+    setEffectsUz(newEffectsUz);
+    setQuantity(newQuantity);
   };
 
   useEffect(() => {
@@ -60,53 +64,110 @@ const AdminCases = () => {
         'Authorization': `Bearer ${token}`,
       }
     }).then((res) => {
-      setAllDataRu(res.data.data);
+      const data = res.data.data;
+      setAllData(data);
       setLoading(false);
-      const initialFields = res.data.data.caseResult.map(result => ({
-        title: result.titleRu,
-        description: result.valueRu.join('\n') // Преобразовать массив в строку
-      }));
-      setFields(initialFields);
-      setQuantity(initialFields.length);
 
-      const initialEffects = res.data.data.effect.map(effect => ({
-        value: effect.value,
-        effectDescription: effect.effectDescriptionRu // Используем правильный ключ здесь
+      const initialFieldsRu = data.caseResult.map(result => ({
+        title: result.titleRu,
+        description: result.valueRu.join('\n')
       }));
-      setEffects(initialEffects);
+      const initialFieldsUz = data.caseResult.map(result => ({
+        title: result.titleUz,
+        description: result.valueUz.join('\n')
+      }));
+      setFieldsRu(initialFieldsRu);
+      setFieldsUz(initialFieldsUz);
+      setQuantity(initialFieldsRu.length);
+
+      const initialEffectsRu = data.effect.map(effect => ({
+        value: effect.value,
+        effectDescription: effect.effectDescriptionRu
+      }));
+      const initialEffectsUz = data.effect.map(effect => ({
+        value: effect.value,
+        effectDescription: effect.effectDescriptionUz
+      }));
+      setEffectsRu(initialEffectsRu);
+      setEffectsUz(initialEffectsUz);
     }).catch((error) => {
       console.error('Error fetching data:', error);
       setLoading(false);
     });
   }, [id, token]);
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setMainPhoto(file);
-    setAllDataRu({
-      ...allDataRu,
+    setAllData({
+      ...allData,
       mainPhoto: { httpUrl: URL.createObjectURL(file) },
     });
   };
-  const handleSubmit = () => {
-    const updatedCaseResults = fields.map((field, index) => ({
-      ...allDataRu.caseResult[index],
-      titleRu: field.title,
-      valueRu: field.description.split('\n') // Преобразовать строку обратно в массив
-    }));
 
-    const updatedEffects = effects.map((effect, index) => ({
-      ...allDataRu.effect[index],
-      value: effect.value,
-      effectDescriptionRu: effect.effectDescription // Используем правильный ключ здесь
-    }));
-
-    dispatch(updateCase({ ...allDataRu, caseResult: updatedCaseResults, effect: updatedEffects, id, mainPhoto }));
+  const handleGalleryChange = (e) => {
+    const files = Array.from(e.target.files);
+    setAllData({ ...allData, gallery: files });
   };
 
+  const handleFieldChange = (index, field, value, lang) => {
+    if (lang === 'ru') {
+      const newFields = [...fieldsRu];
+      newFields[index][field] = value;
+      setFieldsRu(newFields);
+    } else {
+      const newFields = [...fieldsUz];
+      newFields[index][field] = value;
+      setFieldsUz(newFields);
+    }
+  };
+
+  const handleEffectChange = (index, field, value, lang) => {
+    if (lang === 'ru') {
+      const newEffects = [...effectsRu];
+      newEffects[index][field] = value;
+      setEffectsRu(newEffects);
+    } else {
+      const newEffects = [...effectsUz];
+      newEffects[index][field] = value;
+      setEffectsUz(newEffects);
+    }
+  };
+
+  const handleSubmit = () => {
+    const updatedCaseResults = fieldsRu.map((field, index) => ({
+      ...allData.caseResult[index],
+      titleRu: field.title,
+      valueRu: field.description.split('\n'),
+      titleUz: fieldsUz[index].title,
+      valueUz: fieldsUz[index].description.split('\n')
+    }));
+
+    const updatedEffects = effectsRu.map((effect, index) => ({
+      ...allData.effect[index],
+      value: effect.value,
+      effectDescriptionRu: effect.effectDescription,
+      effectDescriptionUz: effectsUz[index].effectDescription
+    }));
+
+    const caseData = {
+      ...allData,
+      caseResult: updatedCaseResults,
+      effect: updatedEffects,
+      id,
+      mainPhoto
+    };
+
+    dispatch(updateCase(caseData));
+  };
 
   const handleRequestChange = (e) => {
-    const requestArray = e.target.value.split('\n'); // Преобразовать строку обратно в массив(для "запросы")
-    setAllDataRu({ ...allDataRu, requestRu: requestArray });
+    const requestArray = e.target.value.split('\n');
+    if (language === 'ru') {
+      setAllData({ ...allData, requestRu: requestArray });
+    } else {
+      setAllData({ ...allData, requestUz: requestArray });
+    }
   };
 
   if (loading) {
@@ -117,6 +178,9 @@ const AdminCases = () => {
     <div className="mx-auto px-[100px]">
       <div className="bg-bg-admin rounded-lg">
         <div className="pl-[8%] w-11/12">
+          <button onClick={() => setLanguage(language === 'ru' ? 'uz' : 'ru')} className='px-6 py-2 border border-violet-400 rounded-full mt-12'>
+            {language === 'ru' ? 'Uzbek' : 'русский'}
+          </button>
           <h1 className="text-uslugi-text text-[36px] text-center mb-[50px] pt-[30px]">
             header
           </h1>
@@ -128,8 +192,8 @@ const AdminCases = () => {
               type="text"
               id="title"
               name="title"
-              value={allDataRu.titleRu || ""}
-              onChange={(e) => setAllDataRu({ ...allDataRu, titleRu: e.target.value })}
+              value={language === 'ru' ? allData.titleRu : allData.titleUz || ""}
+              onChange={(e) => language === 'ru' ? setAllData({ ...allData, titleRu: e.target.value }) : setAllData({ ...allData, titleUz: e.target.value })}
               className="w-full border border-uslugi-text p-3 rounded-lg"
             />
           </div>
@@ -145,11 +209,11 @@ const AdminCases = () => {
               type="text"
               id="name"
               name="name"
-              value={allDataRu.nameRu || ""}
-              onChange={(e) => setAllDataRu({ ...allDataRu, nameRu: e.target.value })}
+              value={language === 'ru' ? allData.nameRu : allData.nameUz || ""}
+              onChange={(e) => language === 'ru' ? setAllData({ ...allData, nameRu: e.target.value }) : setAllData({ ...allData, nameUz: e.target.value })}
               className="w-full border border-uslugi-text p-3 rounded-lg"
             />
-            {effects.map((effect, index) => (
+            {(language === 'ru' ? effectsRu : effectsUz).map((effect, index) => (
               <div key={index}>
                 <label htmlFor={`effect-value-${index}`} className="block text-lg mb-2 mt-[70px]">
                   Процент
@@ -159,11 +223,7 @@ const AdminCases = () => {
                   id={`effect-value-${index}`}
                   name="value"
                   value={effect.value}
-                  onChange={(e) => {
-                    const newEffects = [...effects];
-                    newEffects[index].value = e.target.value;
-                    setEffects(newEffects);
-                  }}
+                  onChange={(e) => handleEffectChange(index, 'value', e.target.value, language)}
                   className="w-full border border-uslugi-text p-3 rounded-lg mb-3"
                 />
                 <label htmlFor={`effect-description-${index}`} className="block text-lg mb-2">
@@ -173,11 +233,7 @@ const AdminCases = () => {
                   id={`effect-description-${index}`}
                   name="effectDescription"
                   value={effect.effectDescription}
-                  onChange={(e) => {
-                    const newEffects = [...effects];
-                    newEffects[index].effectDescription = e.target.value;
-                    setEffects(newEffects);
-                  }}
+                  onChange={(e) => handleEffectChange(index, 'effectDescription', e.target.value, language)}
                   className="w-full border border-uslugi-text p-3 rounded-lg"
                 />
               </div>
@@ -193,8 +249,8 @@ const AdminCases = () => {
             <textarea
               id="about"
               name="about"
-              value={allDataRu.aboutRu || ""}
-              onChange={(e) => setAllDataRu({ ...allDataRu, aboutRu: e.target.value })}
+              value={language === 'ru' ? allData.aboutRu : allData.aboutUz || ""}
+              onChange={(e) => language === 'ru' ? setAllData({ ...allData, aboutRu: e.target.value }) : setAllData({ ...allData, aboutUz: e.target.value })}
               className="w-full border border-uslugi-text p-3 rounded-lg"
               rows="4"
             ></textarea>
@@ -206,7 +262,7 @@ const AdminCases = () => {
             <textarea
               id="request"
               name="request"
-              value={allDataRu.requestRu.join('\n')}
+              value={language === 'ru' ? allData.requestRu.join('\n') : allData.requestUz.join('\n')}
               onChange={handleRequestChange}
               className="w-full border border-uslugi-text p-3 rounded-lg"
               rows="4"
@@ -221,8 +277,8 @@ const AdminCases = () => {
               type="text"
               id="link"
               name="link"
-              value={allDataRu.link || ""}
-              onChange={(e) => setAllDataRu({ ...allDataRu, link: e.target.value })}
+              value={language === 'ru' ? allData.link : allData.link || ""}
+              onChange={(e) => setAllData({ ...allData, link: e.target.value })}
               className="w-full border border-uslugi-text p-3 rounded-lg"
             />
           </div>
@@ -251,7 +307,7 @@ const AdminCases = () => {
               </div>
             </div>
             <div className="flex flex-col mb-[20px]">
-              {fields.map((field, index) => (
+              {(language === 'ru' ? fieldsRu : fieldsUz).map((field, index) => (
                 <div key={index} className="flex flex-col">
                   <label htmlFor={`caseResult-title-${index}`} className="block text-lg mb-2">
                     Заголовок этапа {index + 1}
@@ -261,11 +317,7 @@ const AdminCases = () => {
                     id={`caseResult-title-${index}`}
                     name="title"
                     value={field.title}
-                    onChange={(e) => {
-                      const newFields = [...fields];
-                      newFields[index].title = e.target.value;
-                      setFields(newFields);
-                    }}
+                    onChange={(e) => handleFieldChange(index, 'title', e.target.value, language)}
                     className="w-full border border-uslugi-text p-3 rounded-lg mb-4"
                   />
                   <label htmlFor={`caseResult-value-${index}`} className="block text-lg mb-2">
@@ -275,11 +327,7 @@ const AdminCases = () => {
                     id={`caseResult-value-${index}`}
                     name="value"
                     value={field.description}
-                    onChange={(e) => {
-                      const newFields = [...fields];
-                      newFields[index].description = e.target.value;
-                      setFields(newFields);
-                    }}
+                    onChange={(e) => handleFieldChange(index, 'description', e.target.value, language)}
                     className="w-full border border-uslugi-text p-3 rounded-lg mb-4"
                   />
                 </div>
@@ -307,17 +355,11 @@ const AdminCases = () => {
                 type="file"
                 className="file-upload"
                 multiple
-                onChange={(e) => {
-                  const files = Array.from(e.target.files);
-                  const newGallery = files.map((file) => ({
-                    httpUrl: URL.createObjectURL(file),
-                  }));
-                  setAllDataRu({ ...allDataRu, gallery: newGallery });
-                }}
+                onChange={handleGalleryChange}
               />
               <div className="flex gap-[50px] flex-wrap">
-                {allDataRu.gallery &&
-                  allDataRu.gallery.map((photo, index) => (
+                {allData.gallery &&
+                  allData.gallery.map((photo, index) => (
                     <img
                       key={index}
                       src={photo.httpUrl}
@@ -345,9 +387,9 @@ const AdminCases = () => {
                 onChange={handleFileChange}
               />
               <div className="flex gap-[50px]">
-                {allDataRu.mainPhoto && (
+                {allData.mainPhoto && (
                   <img
-                    src={allDataRu.mainPhoto.httpUrl}
+                    src={allData.mainPhoto.httpUrl}
                     alt="Main Photo"
                     className="w-20 h-20 bg-white rounded-lg"
                   />
@@ -360,7 +402,6 @@ const AdminCases = () => {
                 Сохранить
               </button>
             </div>
-
           </div>
         </div>
       </div>
